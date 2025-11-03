@@ -60,6 +60,18 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
         /p:WarningLevel=0; \
     fi
 
+# Also publish the Readarr.Mono project so Readarr.Mono.dll is present for AssemblyLoader
+RUN dotnet publish NzbDrone.Mono/Readarr.Mono.csproj \
+    -c Release \
+    -f net6.0 \
+    -r linux-x64 \
+    --self-contained false \
+    --no-restore \
+    -o /app \
+    /p:EnableCompressionInSingleFile=false \
+    /p:RunAnalyzers=false
+
+
 # Stage 2: Build frontend (optional, can be skipped for backend-only)
 FROM node:16-alpine AS frontend-build
 
