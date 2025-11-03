@@ -61,15 +61,32 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     fi
 
 # Also publish the Readarr.Mono project so Readarr.Mono.dll is present for AssemblyLoader
-RUN dotnet publish NzbDrone.Mono/Readarr.Mono.csproj \
-    -c Release \
-    -f net6.0 \
-    -r linux-x64 \
-    --self-contained false \
-    --no-restore \
-    -o /app \
-    /p:EnableCompressionInSingleFile=false \
-    /p:RunAnalyzers=false
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      dotnet restore NzbDrone.Mono/Readarr.Mono.csproj --runtime linux-arm64; \
+    else \
+      dotnet restore NzbDrone.Mono/Readarr.Mono.csproj --runtime linux-x64; \
+    fi && \
+    if [ "$TARGETARCH" = "arm64" ]; then \
+      dotnet publish NzbDrone.Mono/Readarr.Mono.csproj \
+        -c Release \
+        -f net6.0 \
+        -r linux-arm64 \
+        --self-contained false \
+        --no-restore \
+        -o /app \
+        /p:EnableCompressionInSingleFile=false \
+        /p:RunAnalyzers=false; \
+    else \
+      dotnet publish NzbDrone.Mono/Readarr.Mono.csproj \
+        -c Release \
+        -f net6.0 \
+        -r linux-x64 \
+        --self-contained false \
+        --no-restore \
+        -o /app \
+        /p:EnableCompressionInSingleFile=false \
+        /p:RunAnalyzers=false; \
+    fi
 
 
 # Stage 2: Build frontend (optional, can be skipped for backend-only)

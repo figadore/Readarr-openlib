@@ -13,9 +13,8 @@ permissions:
 
 env:
   # Image repository on GitHub Container Registry
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
-  # Note: IMAGE_TAG is computed at runtime in a step (replace() is not
-  # available in workflow expressions on all runners).
+  # Note: IMAGE_NAME and IMAGE_TAG are computed at runtime in a step to
+  # ensure the repository name is lowercased (docker/ghcr requires lowercase).
 
 jobs:
   build-and-push:
@@ -40,6 +39,13 @@ jobs:
         # Replace any slashes with dashes to make a valid Docker tag
         TAG="${TAG//\//-}"
         echo "Computed tag: $TAG"
+        # Compute a lowercase image name from GITHUB_REPOSITORY (owner/repo)
+        # Bash parameter expansion ${var,,} lowercases the value.
+        IMAGE_NAME_LOWER="ghcr.io/${GITHUB_REPOSITORY,,}"
+        echo "Computed image name: $IMAGE_NAME_LOWER"
+        # Export image name to subsequent steps and as a step output
+        echo "IMAGE_NAME=$IMAGE_NAME_LOWER" >> $GITHUB_ENV
+        echo "image_name=$IMAGE_NAME_LOWER" >> $GITHUB_OUTPUT
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
 
@@ -57,4 +63,4 @@ jobs:
         file: Dockerfile
         push: true
         tags: |
-          ${{ env.IMAGE_NAME }}:${{ steps.prepare_tag.outputs.tag }}
+          ${{ steps.prepare_tag.outputs.image_name }}:${{ steps.prepare_tag.outputs.tag }}
