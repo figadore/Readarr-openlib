@@ -1,3 +1,5 @@
+note: this fork is not intended to be maintained, it is a temporary way to build and publish the docker image from the upstream fork
+
 # ✨ OpenLibrary Integration Complete
 
 > **This fork has a working OpenLibrary metadata integration!** The community effort mentioned below is now complete.
