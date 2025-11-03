@@ -14,8 +14,8 @@ permissions:
 env:
   # Image repository on GitHub Container Registry
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  # Use the branch or tag name that triggered the run, sanitize slashes
-  IMAGE_TAG: ${{ replace(github.ref_name, '/', '-') }}
+  # Note: IMAGE_TAG is computed at runtime in a step (replace() is not
+  # available in workflow expressions on all runners).
 
 jobs:
   build-and-push:
@@ -27,6 +27,21 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+
+    - name: Prepare image tag
+      id: prepare_tag
+      run: |
+        # Prefer GITHUB_REF_NAME (branch or tag name). Fallback to last path segment of GITHUB_REF.
+        if [ -n "${GITHUB_REF_NAME:-}" ]; then
+          TAG="${GITHUB_REF_NAME}"
+        else
+          TAG="$(echo "$GITHUB_REF" | sed 's,.*/,,')"
+        fi
+        # Replace any slashes with dashes to make a valid Docker tag
+        TAG="${TAG//\//-}"
+        echo "Computed tag: $TAG"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v2
@@ -42,4 +57,4 @@ jobs:
         file: Dockerfile
         push: true
         tags: |
-          ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          ${{ env.IMAGE_NAME }}:${{ steps.prepare_tag.outputs.tag }}
